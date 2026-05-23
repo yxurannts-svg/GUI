@@ -108,16 +108,17 @@ function ScreenLibrary:CreateWindow(opts)
     local W         = opts.Width     or 360
     local H         = opts.Height    or 480
     local CreatorId = opts.CreatorId or 0
-    local Accent    = opts.Accent    or TH.accent
+    local _accentRaw = opts.Accent or nil
+    local Accent
+    if type(_accentRaw) == "string" and #_accentRaw >= 6 then
+        local r=tonumber(_accentRaw:sub(1,2),16)/255
+        local g=tonumber(_accentRaw:sub(3,4),16)/255
+        local b=tonumber(_accentRaw:sub(5,6),16)/255
+        Accent = Color3.new(r,g,b)
+    else
+        Accent = _accentRaw or TH.accent
+    end
     local GuiIcon   = opts.GuiIcon   or nil
-
-    -- ── Timeout guard ─────────────────────────────────────────────────
-    local _ok = false
-    task.delay(15, function()
-        if not _ok then
-            warn("[ScreenLibrary] Mount timeout after 15s — check executor permissions, game restrictions, or HTTP access.")
-        end
-    end)
 
     -- ── ScreenGui ─────────────────────────────────────────────────────
     local SG = Instance.new("ScreenGui")
@@ -126,25 +127,6 @@ function ScreenLibrary:CreateWindow(opts)
     SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     pcall(function() SG.IgnoreGuiInset = true end)
     SG.Parent = resolveParent()
-
-    -- ── Loading screen ────────────────────────────────────────────────
-    local Loader = frame(SG, TH.bg, UDim2.new(0,W,0,H),
-        UDim2.new(0.5,-W/2,0.5,-H/2), 100)
-    Loader.ClipsDescendants = true
-    corner(Loader, 12)
-    lbl(Loader, "Loading "..Title.."...",
-        UDim2.new(1,0,0,24), UDim2.new(0,0,0.42,0),
-        13, TH.txt, TH.fontBold, Enum.TextXAlignment.Center, 101)
-    local lbg = frame(Loader, TH.btn, UDim2.new(0.55,0,0,5),
-        UDim2.new(0.225,0,0.54,0), 101); corner(lbg,3)
-    local lfill = frame(lbg, Accent, UDim2.new(0,0,1,0),
-        UDim2.new(0,0,0,0), 102); corner(lfill,3)
-    task.spawn(function()
-        for i=1,20 do
-            tw(lfill,0.04,{Size=UDim2.new(i/20,0,1,0)}):Play()
-            task.wait(0.04)
-        end
-    end)
 
     -- ── Main Frame ────────────────────────────────────────────────────
     local TBAR_H   = 44
@@ -952,15 +934,6 @@ function ScreenLibrary:CreateWindow(opts)
 
     -- Activate Main by default
     _setActive("Main")
-
-    -- Remove loader
-    task.spawn(function()
-        task.wait(0.6)
-        tw(Loader,0.25,{BackgroundTransparency=1}):Play()
-        task.wait(0.3); pcall(function() Loader:Destroy() end)
-    end)
-
-    _ok = true
 
     -- ══════════════════════════════════════════════════════════════════
     --  Window API
