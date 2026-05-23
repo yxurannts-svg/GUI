@@ -71,10 +71,17 @@ local function btn(par,txt,sz,pos,bg,fs,zi)
     b.Font=TH.font; b.BorderSizePixel=0; b.AutoButtonColor=false
     b.ZIndex=zi or 3; b.Parent=par; return b
 end
+local function imglbl(par,img,sz,pos,zi)
+    local l=Instance.new("ImageLabel"); l.Image=img or ""
+    l.Size=sz or UDim2.new(0,20,0,20); l.Position=pos or UDim2.new(0,0,0,0)
+    l.BackgroundTransparency=1; l.ScaleType=Enum.ScaleType.Fit
+    l.ZIndex=zi or 3; l.Parent=par; return l
+end
 local function imgbtn(par,img,sz,pos,bg,zi)
     local b=Instance.new("ImageButton"); b.Image=img or ""
     b.Size=sz or UDim2.new(0,26,0,26); b.Position=pos or UDim2.new(0,0,0,0)
     b.BackgroundColor3=bg or TH.btn; b.BorderSizePixel=0
+    b.ScaleType=Enum.ScaleType.Fit
     b.AutoButtonColor=false; b.ZIndex=zi or 3; b.Parent=par; return b
 end
 local function listlayout(par,dir,pad,sort)
@@ -134,7 +141,7 @@ function ScreenLibrary:CreateWindow(opts)
     local FOOTER_H = 52
 
     local Main = frame(SG, TH.bg, UDim2.new(0,W,0,H),
-        UDim2.new(0.5,-W/2,0.5,-H/2), 2)
+        UDim2.new(0,10,0,10), 2)
     Main.Name = "Main"; Main.ClipsDescendants = true
     corner(Main, 12)
 
@@ -224,10 +231,9 @@ function ScreenLibrary:CreateWindow(opts)
     corner(Footer,0)
 
     local CrABG = frame(Footer, Color3.fromRGB(28,28,40),
-        UDim2.new(0,34,0,34), UDim2.new(0,7,0.5,-17), 4); corner(CrABG,17)
-    local CrAvatar = Instance.new("ImageLabel")
-    CrAvatar.Size=UDim2.new(1,0,1,0); CrAvatar.BackgroundTransparency=1
-    CrAvatar.ZIndex=5; CrAvatar.Parent=CrABG; corner(CrAvatar,17)
+        UDim2.new(0,36,0,36), UDim2.new(0,7,0.5,-18), 4); corner(CrABG,18)
+    local CrAvatar = imglbl(CrABG,"",UDim2.new(1,0,1,0),UDim2.new(0,0,0,0),5)
+    corner(CrAvatar,18)
     local CrName = lbl(Footer,"Loading...",
         UDim2.new(1,-120,0,17),UDim2.new(0,48,0,5),
         11,TH.txt,TH.fontBold,Enum.TextXAlignment.Left,4)
@@ -434,9 +440,7 @@ function ScreenLibrary:CreateWindow(opts)
         TB.LayoutOrder=_tabOrder; corner(TB,6)
         TB.TextXAlignment=iconId and Enum.TextXAlignment.Right or Enum.TextXAlignment.Center
         if iconId then
-            local ic=Instance.new("ImageLabel"); ic.Image=iconId
-            ic.Size=UDim2.new(0,14,0,14); ic.Position=UDim2.new(0,6,0.5,-7)
-            ic.BackgroundTransparency=1; ic.ZIndex=6; ic.Parent=TB
+            imglbl(TB,iconId,UDim2.new(0,16,0,16),UDim2.new(0,6,0.5,-8),6)
             local tp=Instance.new("UIPadding"); tp.PaddingRight=UDim.new(0,6); tp.Parent=TB
         end
 
@@ -489,14 +493,14 @@ function ScreenLibrary:CreateWindow(opts)
             SHdr.LayoutOrder=0
             lbl(SHdr,secName or "Section",
                 UDim2.new(1,-28,1,0),UDim2.new(0,10,0,0),
-                11,TH.txt,TH.fontBold,Enum.TextXAlignment.Left,5)
+                13,TH.txt,TH.fontBold,Enum.TextXAlignment.Left,5)
             local SArrow=lbl(SHdr,"[v]",
                 UDim2.new(0,22,1,0),UDim2.new(1,-24,0,0),
                 10,Accent,TH.font,Enum.TextXAlignment.Center,5)
 
             -- Content frame
             local SCon=frame(SC,TH.panel,UDim2.new(1,0,0,0),UDim2.new(0,0,0,28),3)
-            SCon.ClipsDescendants=false
+            SCon.ClipsDescendants=true
             local SCLL=listlayout(SCon,nil,3)
             pad(SCon,3,4,3,4)
 
@@ -524,19 +528,21 @@ function ScreenLibrary:CreateWindow(opts)
 
             -- ── Row factory ───────────────────────────────────────────
             local _rowOrd=0
-            local ROW_H=36
+            local ROW_H=44  -- 44px = comfortable mobile touch target
             local function _row(desc,h)
                 _rowOrd=_rowOrd+1
-                local r=frame(SCon,TH.btn,UDim2.new(1,0,0,h or ROW_H),nil,4)
+                local rH=h or ROW_H
+                local r=frame(SCon,TH.btn,UDim2.new(1,0,0,rH),nil,4)
                 r.LayoutOrder=_rowOrd; corner(r,6)
-                -- Three-dots button
-                local dBtn=imgbtn(r,A.Dots,UDim2.new(0,20,0,20),
-                    UDim2.new(1,-22,0.5,-10),Color3.fromRGB(0,0,0),5)
-                dBtn.BackgroundTransparency=1
+                -- Info button: plain text, guaranteed to render on all executors
                 if desc and desc~="" then
+                    local dBtn=btn(r,"...",UDim2.new(0,26,0,26),
+                        UDim2.new(1,-30,0.5,-13),TH.panel,10,5)
+                    corner(dBtn,5)
+                    dBtn.TextColor3=TH.sub
                     dBtn.MouseButton1Click:Connect(function() _infoPopup(desc) end)
                 end
-                _bumpSec(h or ROW_H)
+                _bumpSec(rH)
                 return r
             end
 
@@ -558,7 +564,7 @@ function ScreenLibrary:CreateWindow(opts)
                 local bi=Instance.new("ImageLabel"); bi.Image=A.BtnBG
                 bi.Size=UDim2.new(1,0,1,0); bi.BackgroundTransparency=1; bi.ZIndex=4; bi.Parent=r
                 local nl=lbl(r,n,UDim2.new(1,-28,1,0),UDim2.new(0,10,0,0),
-                    11,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
+                    13,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
                 local clk=btn(r,"",UDim2.new(1,-24,1,0),UDim2.new(0,0,0,0),
                     Color3.fromRGB(0,0,0),0,6); clk.BackgroundTransparency=1
                 clk.MouseButton1Click:Connect(function() pcall(cb) end)
@@ -573,11 +579,11 @@ function ScreenLibrary:CreateWindow(opts)
                 local n=o.Name or "Toggle"; local val=o.Default or false
                 local cb=o.Callback or function()end
                 local r=_row(o.Description)
-                lbl(r,n,UDim2.new(1,-72,1,0),UDim2.new(0,10,0,0),
-                    11,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
+                lbl(r,n,UDim2.new(1,-90,1,0),UDim2.new(0,10,0,0),
+                    13,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
                 -- Geometric (rounded-rect) toggle
                 local tbg=frame(r,val and Accent or Color3.fromRGB(30,30,44),
-                    UDim2.new(0,42,0,22),UDim2.new(1,-66,0.5,-11),5)
+                    UDim2.new(0,42,0,22),UDim2.new(1,-84,0.5,-11),5)
                 corner(tbg,4)
                 local tknob=frame(tbg,Color3.new(1,1,1),
                     UDim2.new(0,16,0,16),UDim2.new(0,val and 22 or 3,0.5,-8),6)
@@ -608,7 +614,7 @@ function ScreenLibrary:CreateWindow(opts)
                 local r=_row(o.Description,50)  -- taller row
                 local cv=math.clamp(def,min,max)
                 lbl(r,n,UDim2.new(1,-60,0,16),UDim2.new(0,10,0,4),
-                    11,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
+                    13,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
                 local vl=lbl(r,tostring(cv),UDim2.new(0,46,0,16),
                     UDim2.new(1,-54,0,4),10,Accent,TH.font,Enum.TextXAlignment.Right,5)
                 local tk=frame(r,Color3.fromRGB(24,24,36),
@@ -666,7 +672,7 @@ function ScreenLibrary:CreateWindow(opts)
                 local def=o.Default or (items[1] or ""); local cb=o.Callback or function()end
                 local r=_row(o.Description)
                 lbl(r,n,UDim2.new(0.48,0,1,0),UDim2.new(0,10,0,0),
-                    11,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
+                    13,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
                 local sel=def
                 local sl=lbl(r,def,UDim2.new(0.38,-8,1,0),UDim2.new(0.48,4,0,0),
                     10,Accent,TH.font,Enum.TextXAlignment.Right,5)
@@ -690,7 +696,7 @@ function ScreenLibrary:CreateWindow(opts)
                 local n=o.Name or "Input"; local cb=o.Callback or function()end
                 local r=_row(o.Description,50)
                 lbl(r,n,UDim2.new(1,-30,0,16),UDim2.new(0,10,0,4),
-                    11,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
+                    13,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
                 local ibg=frame(r,Color3.fromRGB(14,14,20),
                     UDim2.new(1,-52,0,22),UDim2.new(0,8,0,24),5); corner(ibg,4)
                 local ib=Instance.new("TextBox")
@@ -716,7 +722,7 @@ function ScreenLibrary:CreateWindow(opts)
                 local def=o.Default or Enum.KeyCode.Unknown; local cur=def
                 local r=_row(o.Description)
                 lbl(r,n,UDim2.new(1,-90,1,0),UDim2.new(0,10,0,0),
-                    11,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
+                    13,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
                 local kb=btn(r,tostring(def):gsub("Enum.KeyCode.",""),
                     UDim2.new(0,64,0,24),UDim2.new(1,-88,0.5,-12),
                     Color3.fromRGB(24,24,38),10,5); corner(kb,5)
@@ -768,7 +774,7 @@ function ScreenLibrary:CreateWindow(opts)
                 local cb=o.Callback or function()end
                 local r=_row(o.Description)
                 lbl(r,n,UDim2.new(1,-52,1,0),UDim2.new(0,10,0,0),
-                    11,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
+                    13,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
                 local ck=def
                 local bx=frame(r,ck and Accent or Color3.fromRGB(24,24,38),
                     UDim2.new(0,20,0,20),UDim2.new(1,-46,0.5,-10),5); corner(bx,4)
@@ -792,7 +798,7 @@ function ScreenLibrary:CreateWindow(opts)
                 local n=o.Name or "Progress"; local iv=o.Value or 0
                 local r=_row(o.Description,42)
                 lbl(r,n,UDim2.new(1,-48,0,16),UDim2.new(0,10,0,4),
-                    11,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
+                    13,TH.txt,TH.font,Enum.TextXAlignment.Left,5)
                 local pv=lbl(r,iv.."%",UDim2.new(0,38,0,16),UDim2.new(1,-44,0,4),
                     10,Accent,TH.font,Enum.TextXAlignment.Right,5)
                 local pt=frame(r,Color3.fromRGB(24,24,38),UDim2.new(1,-16,0,6),
